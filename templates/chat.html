@@ -2,115 +2,53 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>چت با هوش مصنوعی</title>
+    <title>چت با Claude AI</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        #chat-container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            height: 500px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-        #message-form {
-            display: flex;
-            gap: 10px;
-        }
-        #message-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .user-message {
-            background-color: #e3f2fd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            text-align: left;
-        }
-        .assistant-message {
-            background-color: #f1f1f1;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            text-align: left;
-        }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat-container { background: white; border-radius: 10px; padding: 20px; height: 500px; overflow-y: auto; margin-bottom: 20px; }
+        .user-message { background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+        .assistant-message { background: #f1f1f1; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h1>چت با هوش مصنوعی</h1>
+    <h1>چت با Claude AI</h1>
     <div id="chat-container"></div>
     <form id="message-form">
-        <input type="text" id="message-input" placeholder="پیام خود را بنویسید..." required>
+        <input type="text" id="message-input" placeholder="پیام شما..." required>
         <button type="submit">ارسال</button>
     </form>
 
     <script>
-        const chatContainer = document.getElementById('chat-container');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        
-        messageForm.addEventListener('submit', async (e) => {
+        document.getElementById('message-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const message = messageInput.value;
+            const input = document.getElementById('message-input');
+            const message = input.value;
             
             if (!message) return;
             
             // نمایش پیام کاربر
-            const userMessageDiv = document.createElement('div');
-            userMessageDiv.className = 'user-message';
-            userMessageDiv.textContent = `شما: ${message}`;
-            chatContainer.appendChild(userMessageDiv);
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML += `<div class="user-message">شما: ${message}</div>`;
             
-            // پاک کردن فیلد ورودی
-            messageInput.value = '';
+            input.value = '';
             
             try {
-                // ارسال درخواست به سرور
                 const response = await fetch('/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `message=${encodeURIComponent(message)}`
                 });
                 
                 const data = await response.json();
                 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                if (data.error) throw new Error(data.error);
                 
-                // نمایش پاسخ هوش مصنوعی
-                const assistantMessageDiv = document.createElement('div');
-                assistantMessageDiv.className = 'assistant-message';
-                assistantMessageDiv.textContent = `هوش مصنوعی: ${data.reply}`;
-                chatContainer.appendChild(assistantMessageDiv);
-                
-                // اسکرول به پایین
+                // نمایش پاسخ
+                chatContainer.innerHTML += `<div class="assistant-message">کلود: ${data.reply}</div>`;
                 chatContainer.scrollTop = chatContainer.scrollHeight;
-                
             } catch (error) {
                 console.error('Error:', error);
-                alert('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.');
+                alert('خطا در ارتباط با سرور');
             }
         });
     </script>

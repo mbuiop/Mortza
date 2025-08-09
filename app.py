@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, jsonify
-import openai
+import requests
 import os
 
 app = Flask(__name__)
 
-# تنظیم کلید API OpenAI - لطفاً این را در محیط واقعی در یک فایل محیطی یا مدیریت رمز عبور امن ذخیره کنید
-openai.api_key = "sk-ant-api03-srD...swAA"  # کلید واقعی خود را اینجا قرار دهید
+# تنظیمات Claude API
+CLAUDE_API_KEY = "sk-ant-api03-srD...swAA"  # کلید API خود را اینجا قرار دهید
+CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 
 @app.route('/')
 def home():
@@ -15,17 +16,22 @@ def home():
 def chat():
     user_message = request.form['message']
     
+    headers = {
+        "x-api-key": CLAUDE_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+    
+    payload = {
+        "model": "claude-3-opus-20240229",  # می‌توانید مدل را تغییر دهید
+        "max_tokens": 1000,
+        "messages": [{"role": "user", "content": user_message}]
+    }
+    
     try:
-        # ارسال درخواست به OpenAI API
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # یا مدل دیگری که می‌خواهید استفاده کنید
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_message}
-            ]
-        )
-        
-        assistant_reply = response.choices[0].message['content']
+        response = requests.post(CLAUDE_API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        assistant_reply = response.json()["content"][0]["text"]
         return jsonify({'reply': assistant_reply})
     
     except Exception as e:

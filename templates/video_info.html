@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاعات ویدیو</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .info-box {
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .cut-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 150px;
+            text-align: left;
+        }
+        input {
+            padding: 8px;
+            width: 100px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            align-self: flex-start;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>اطلاعات ویدیو</h1>
+    
+    <div class="info-box">
+        <p><strong>نام فایل:</strong> {{ filename }}</p>
+        <p><strong>مدت زمان:</strong> {{ formatted_duration }}</p>
+        <p><strong>نرخ فریم:</strong> {{ fps }} FPS</p>
+        <p><strong>رزولوشن:</strong> {{ resolution }}</p>
+    </div>
+    
+    <form method="post" action="/cut" class="cut-form">
+        <input type="hidden" name="unique_id" value="{{ unique_id }}">
+        <input type="hidden" name="original_filename" value="{{ filename }}">
+        
+        <div class="form-group">
+            <label for="start_min">دقیقه شروع:</label>
+            <input type="number" name="start_min" id="start_min" step="0.01" min="0" max="{{ duration / 60 }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="end_min">دقیقه پایان:</label>
+            <input type="number" name="end_min" id="end_min" step="0.01" min="0" max="{{ duration / 60 }}" required>
+        </div>
+        
+        <button type="submit">برش ویدیو</button>
+    </form>
+</body>
+</html>

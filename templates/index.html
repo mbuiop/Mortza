@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>برش دهنده ویدیو</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .upload-box {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>برش دهنده ویدیو</h1>
+    <p>یک فایل ویدیویی آپلود کنید و بخش مورد نظر خود را برش دهید</p>
+    
+    <form method="post" enctype="multipart/form-data" action="/upload">
+        <div class="upload-box">
+            <input type="file" name="file" id="file" accept="video/*">
+            <p>یا فایل را اینجا رها کنید</p>
+        </div>
+        <button type="submit">آپلود ویدیو</button>
+    </form>
+</body>
+</html>

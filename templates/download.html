@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دانلود ویدیو</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .info-box {
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .download-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>ویدیو با موفقیت برش داده شد</h1>
+    
+    <div class="info-box">
+        <p><strong>فایل اصلی:</strong> {{ original_filename }}</p>
+        <p><strong>بخش برش داده شده:</strong> از دقیقه {{ start_min }} تا {{ end_min }}</p>
+    </div>
+    
+    <a href="/download/{{ filename }}" class="download-btn">دانلود ویدیو برش داده شده</a>
+    
+    <p style="margin-top: 30px;">
+        <a href="/">آپلود ویدیوی جدید</a> | 
+        <form action="/cleanup" method="post" style="display: inline;">
+            <button type="submit" style="background-color: #f44336; padding: 5px 10px; font-size: 14px;">پاکسازی فایل‌های موقت</button>
+        </form>
+    </p>
+</body>
+</html>

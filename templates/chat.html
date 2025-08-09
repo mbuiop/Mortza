@@ -1,56 +1,325 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>چت با Claude AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Cutter</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        #chat-container { background: white; border-radius: 10px; padding: 20px; height: 500px; overflow-y: auto; margin-bottom: 20px; }
-        .user-message { background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-        .assistant-message { background: #f1f1f1; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+        }
+        .system-message {
+            background-color: #f1f1f1;
+            margin-right: auto;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .upload-area:hover {
+            border-color: #999;
+        }
+        .time-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .time-inputs input {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .progress-container {
+            margin-top: 10px;
+            display: none;
+        }
+        progress {
+            width: 100%;
+        }
+        video {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>چت با Claude AI</h1>
-    <div id="chat-container"></div>
-    <form id="message-form">
-        <input type="text" id="message-input" placeholder="پیام شما..." required>
-        <button type="submit">ارسال</button>
-    </form>
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <div class="message system-message">
+                Welcome! Upload a video and specify the time range you want to cut.
+            </div>
+        </div>
+        
+        <div id="upload-section">
+            <div class="upload-area" id="drop-area">
+                <p>Drag & drop your video file here or click to select</p>
+                <input type="file" id="file-input" accept="video/*" style="display: none;">
+            </div>
+            
+            <div id="video-info" style="display: none;">
+                <p>Video duration: <span id="duration-display"></span></p>
+                
+                <div class="time-inputs">
+                    <div>
+                        <label for="start-time">Start (minutes):</label>
+                        <input type="number" id="start-time" step="0.1" min="0">
+                    </div>
+                    <div>
+                        <label for="end-time">End (minutes):</label>
+                        <input type="number" id="end-time" step="0.1" min="0">
+                    </div>
+                </div>
+                
+                <button id="cut-btn" disabled>Cut Video</button>
+                
+                <div class="progress-container" id="progress-container">
+                    <progress id="progress-bar" value="0" max="100"></progress>
+                    <p id="progress-text">Processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        document.getElementById('message-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const input = document.getElementById('message-input');
-            const message = input.value;
-            
-            if (!message) return;
-            
-            // نمایش پیام کاربر
-            const chatContainer = document.getElementById('chat-container');
-            chatContainer.innerHTML += `<div class="user-message">شما: ${message}</div>`;
-            
-            input.value = '';
-            
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `message=${encodeURIComponent(message)}`
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) throw new Error(data.error);
-                
-                // نمایش پاسخ
-                chatContainer.innerHTML += `<div class="assistant-message">کلود: ${data.reply}</div>`;
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            } catch (error) {
-                console.error('Error:', error);
-                alert('خطا در ارتباط با سرور');
-            }
+        const fileInput = document.getElementById('file-input');
+        const dropArea = document.getElementById('drop-area');
+        const messagesDiv = document.getElementById('messages');
+        const durationDisplay = document.getElementById('duration-display');
+        const startTimeInput = document.getElementById('start-time');
+        const endTimeInput = document.getElementById('end-time');
+        const cutBtn = document.getElementById('cut-btn');
+        const videoInfo = document.getElementById('video-info');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        let currentFilename = null;
+        let videoDuration = 0;
+        
+        // Handle drag and drop
+        dropArea.addEventListener('click', () => fileInput.click());
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
         });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.style.borderColor = '#4CAF50';
+            dropArea.style.backgroundColor = '#f0fff0';
+        }
+        
+        function unhighlight() {
+            dropArea.style.borderColor = '#ccc';
+            dropArea.style.backgroundColor = '';
+        }
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files } });
+        }
+        
+        function handleFiles(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            uploadFile(file);
+        }
+        
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            addMessage('user-message', `Uploading ${file.name}...`);
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentFilename = data.filename;
+                    videoDuration = data.duration;
+                    
+                    durationDisplay.textContent = data.duration_formatted;
+                    videoInfo.style.display = 'block';
+                    
+                    endTimeInput.max = (data.duration / 60).toFixed(1);
+                    endTimeInput.value = (data.duration / 60).toFixed(1);
+                    
+                    cutBtn.disabled = false;
+                    
+                    addMessage('system-message', 
+                        `Video uploaded successfully. Duration: ${data.duration_formatted}`);
+                } else {
+                    addMessage('system-message', `Error: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                addMessage('system-message', `Upload failed: ${error.message}`);
+            });
+        }
+        
+        cutBtn.addEventListener('click', () => {
+            const startTime = parseFloat(startTimeInput.value) || 0;
+            const endTime = parseFloat(endTimeInput.value) || 0;
+            
+            if (startTime >= endTime) {
+                addMessage('system-message', 'End time must be after start time');
+                return;
+            }
+            
+            if (endTime > videoDuration / 60) {
+                addMessage('system-message', 'End time exceeds video duration');
+                return;
+            }
+            
+            progressContainer.style.display = 'block';
+            cutBtn.disabled = true;
+            
+            addMessage('user-message', 
+                `Cut video from ${startTime} to ${endTime} minutes`);
+            
+            fetch('/cut', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: currentFilename,
+                    start_min: startTime,
+                    end_min: endTime
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    progressBar.value = 100;
+                    progressText.textContent = 'Processing complete!';
+                    
+                    addMessage('system-message', 
+                        `Video cut successfully (${data.start_time} to ${data.end_time})`);
+                    
+                    // Create download link
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = `/download/${data.cut_filename}`;
+                    downloadLink.textContent = 'Download Cut Video';
+                    downloadLink.download = data.cut_filename;
+                    downloadLink.style.display = 'block';
+                    downloadLink.style.marginTop = '10px';
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message system-message';
+                    messageDiv.appendChild(document.createTextNode('Your cut video is ready: '));
+                    messageDiv.appendChild(downloadLink);
+                    
+                    messagesDiv.appendChild(messageDiv);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    
+                    // Enable cut button for new cuts
+                    cutBtn.disabled = false;
+                } else {
+                    addMessage('system-message', `Error: ${data.error}`);
+                    cutBtn.disabled = false;
+                    progressContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                addMessage('system-message', `Error: ${error.message}`);
+                cutBtn.disabled = false;
+                progressContainer.style.display = 'none';
+            });
+        });
+        
+        function addMessage(className, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Simulate progress (in a real app, you'd use WebSocket or SSE for real progress)
+        function simulateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress >= 90) {
+                    clearInterval(interval);
+                }
+                progressBar.value = progress;
+            }, 500);
+        }
     </script>
 </body>
 </html>

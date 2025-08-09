@@ -1,8 +1,8 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, request, redirect, url_for, render_template
 from werkzeug.utils import secure_filename
 from moviepy.editor import VideoFileClip
-import uuid
+import os
+from uuid import uuid4
 from datetime import timedelta
 
 app = Flask(__name__)
